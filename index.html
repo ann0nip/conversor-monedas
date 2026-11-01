@@ -1,0 +1,62 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="theme-color" content="#0f172a">
+<link rel="manifest" href="manifest.json"><link rel="apple-touch-icon" href="icon.png"><title>Conversor ARS · UYU · USD</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:-apple-system,system-ui,sans-serif;background:#0f172a;color:#e2e8f0;padding:16px;max-width:480px;margin:auto}
+h1{font-size:20px;margin:4px 0 12px}.card{background:#1e293b;border-radius:14px;padding:14px;margin-bottom:12px}
+label{font-size:13px;color:#94a3b8;display:block;margin-bottom:6px}
+input{width:100%;font-size:34px;padding:10px;border-radius:10px;border:0;background:#0f172a;color:#fff}
+.seg{display:flex;gap:6px;margin-top:10px}.seg button{flex:1;padding:12px 0;font-size:16px;border-radius:10px;border:1px solid #334155;background:#0f172a;color:#e2e8f0}
+.seg button.on{background:#38bdf8;color:#0f172a;border-color:#38bdf8;font-weight:700}
+.res{display:flex;justify-content:space-between;font-size:24px;padding:8px 0;border-bottom:1px solid #334155}.res:last-child{border:0}.res span:first-child{color:#94a3b8;font-size:16px;align-self:center}
+select{width:100%;font-size:16px;padding:12px 40px 12px 12px;border-radius:10px;background:#0f172a url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='9' viewBox='0 0 14 9'%3E%3Cpath d='M1 1l6 6 6-6' stroke='%2394a3b8' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 14px center;color:#fff;border:1px solid #334155;-webkit-appearance:none;appearance:none;line-height:1.2}
+.q{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #334155;font-size:15px}.q:last-child{border:0}.q span:first-child{color:#94a3b8}.q.hl span{color:#38bdf8;font-weight:700}
+a{color:#38bdf8}
+.meta{font-size:12px;color:#94a3b8;line-height:1.5}.ok{color:#4ade80}.warn{color:#fbbf24}
+table{width:100%;border-collapse:collapse;font-size:14px}td,th{padding:5px 4px;border-bottom:1px solid #334155;text-align:right}td:first-child,th:first-child{text-align:left}
+button.r{width:100%;padding:10px;margin-top:8px;border-radius:10px;border:0;background:#334155;color:#e2e8f0;font-size:14px}
+</style></head><body>
+<h1>Conversor ARS · UYU · USD</h1>
+<div class="card"><label>Monto</label><input id="amt" type="number" inputmode="decimal" placeholder="0" value="100">
+<div class="seg" id="cur"><button data-c="USD" class="on">USD</button><button data-c="UYU">UYU</button><button data-c="ARS">ARS</button></div></div>
+<div class="card" id="out"></div>
+<div class="card"><label>Dólar para pesos argentinos</label>
+<select id="tipo"><option value="bolsa">MEP (bolsa)</option><option value="tarjeta">Tarjeta (oficial + impuestos)</option><option value="oficial">Oficial</option></select>
+<div class="meta" id="rates" style="margin-top:10px"></div><button class="r" id="upd">Actualizar cotizaciones</button></div>
+<div class="card"><label>Cotizaciones</label><div id="quotes"></div></div>
+<div class="card meta" id="src"></div>
+
+
+
+<script>
+const SEED={"ars": {"oficial": 1560, "bolsa": 1575, "blue": 1565, "tarjeta": 2028}, "uyu": 40.19, "fechaArs": "31/10/2026 08:57 (UTC-3)", "fechaUyu": "30/10/2026 21:02 (UTC-3)"};
+let R=JSON.parse(localStorage.getItem('fx')||'null')||SEED, cur='USD', tipo=localStorage.getItem('tipo')||'bolsa';if(tipo==='blue')tipo='bolsa';
+const $=id=>document.getElementById(id), fmt=(n,d)=>n.toLocaleString('es-AR',{maximumFractionDigits:d,minimumFractionDigits:d});
+const names={bolsa:'MEP',tarjeta:'Tarjeta',oficial:'Oficial',blue:'Blue'};
+function render(){const a=parseFloat($('amt').value)||0,ars=R.ars[tipo];
+ let usd=cur==='USD'?a:cur==='UYU'?a/R.uyu:a/ars;
+ const L=[['USD','US$ '+fmt(usd,2)],['UYU','$U '+fmt(usd*R.uyu,0)],['ARS ('+names[tipo]+')','$ '+fmt(usd*ars,0)]].filter(x=>!x[0].startsWith(cur));
+ $('out').innerHTML=L.map(x=>`<div class="res"><span>${x[0]}</span><span>${x[1]}</span></div>`).join('');
+ $('rates').innerHTML=`<span class="${R.live?'ok':'warn'}">${R.live?'Actualizado ahora':'Sin conexión: usando cotización guardada'}</span>`;
+ const q=(k,v,h)=>`<div class="q${h?' hl':''}"><span>${k}</span><span>${v}</span></div>`;
+ $('quotes').innerHTML=['bolsa','tarjeta','oficial'].map(c=>q('1 USD → ARS '+names[c],'$ '+fmt(R.ars[c],2),c===tipo)).join('')
+  +q('1 USD → UYU','$U '+fmt(R.uyu,2))
+  +q('1 UYU → ARS ('+names[tipo]+')','$ '+fmt(ars/R.uyu,2));
+ $('src').innerHTML=`<b>Fuentes</b><br>Dólar en Argentina: <a href="https://dolarapi.com" target="_blank">DolarApi</a> (precio de venta; MEP = dólar bolsa). Actualizado: ${R.fechaArs}<br>Peso uruguayo: <a href="https://www.exchangerate-api.com" target="_blank">ExchangeRate-API</a> (tipo medio de mercado). Actualizado: ${R.fechaUyu}<br>Sin conexión usa la última cotización guardada en este teléfono.`;}
+function f(d){const x=new Date(d);return x.toLocaleString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'})}
+async function upd(){try{
+ const [a,u]=await Promise.all([fetch('https://dolarapi.com/v1/dolares').then(r=>r.json()),fetch('https://open.er-api.com/v6/latest/USD').then(r=>r.json())]);
+ const n={ars:{...R.ars},uyu:u.rates.UYU,fechaUyu:f(u.time_last_update_unix*1000),fechaArs:R.fechaArs};let last=0;
+ a.forEach(d=>{if(n.ars[d.casa]!==undefined){n.ars[d.casa]=d.venta;const t=Date.parse(d.fechaActualizacion);if(t>last)last=t}});
+ n.fechaArs=f(last);R={...n};localStorage.setItem('fx',JSON.stringify(R));R.live=true;}catch(e){R.live=false}render();}
+function setCur(c){cur=c;[...$('cur').children].forEach(b=>b.classList.toggle('on',b.dataset.c===c))}
+const last=JSON.parse(localStorage.getItem('last')||'null');if(last){$('amt').value=last.amt;setCur(last.cur)}
+const save=()=>localStorage.setItem('last',JSON.stringify({amt:$('amt').value,cur}));
+$('cur').onclick=e=>{if(!e.target.dataset.c)return;setCur(e.target.dataset.c);save();render();$('amt').focus();$('amt').select()};
+$('amt').oninput=()=>{save();render()};
+const sel=()=>setTimeout(()=>$('amt').select(),0);$('amt').addEventListener('focus',sel);$('amt').addEventListener('click',sel);
+window.addEventListener('load',()=>{$('amt').focus();$('amt').select()});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden){$('amt').focus();$('amt').select()}});$('tipo').value=tipo;$('tipo').onchange=e=>{tipo=e.target.value;localStorage.setItem('tipo',tipo);render()};
+$('upd').onclick=upd;if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js');render();if(navigator.onLine)upd();
+</script></body></html>
