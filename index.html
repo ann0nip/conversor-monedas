@@ -18,7 +18,7 @@ table{width:100%;border-collapse:collapse;font-size:14px}td,th{padding:5px 4px;b
 button.r{width:100%;padding:10px;margin-top:8px;border-radius:10px;border:0;background:#334155;color:#e2e8f0;font-size:14px}
 </style></head><body>
 <h1>Conversor ARS · UYU · USD</h1>
-<div class="card"><label>Monto</label><input id="amt" type="number" inputmode="decimal" placeholder="0" value="100">
+<div class="card"><label>Monto</label><input id="amt" type="text" inputmode="decimal" autocomplete="off" enterkeyhint="done" placeholder="0" value="100">
 <div class="seg" id="cur"><button data-c="USD" class="on">USD</button><button data-c="UYU">UYU</button><button data-c="ARS">ARS</button></div></div>
 <div class="card" id="out"></div>
 <div class="card"><label>Dólar para pesos argentinos</label>
@@ -34,7 +34,7 @@ const SEED={"ars": {"oficial": 1560, "bolsa": 1575, "blue": 1565, "tarjeta": 202
 let R=JSON.parse(localStorage.getItem('fx')||'null')||SEED, cur='USD', tipo=localStorage.getItem('tipo')||'bolsa';if(tipo==='blue')tipo='bolsa';
 const $=id=>document.getElementById(id), fmt=(n,d)=>n.toLocaleString('es-AR',{maximumFractionDigits:d,minimumFractionDigits:d});
 const names={bolsa:'MEP',tarjeta:'Tarjeta',oficial:'Oficial',blue:'Blue'};
-function render(){const a=parseFloat($('amt').value)||0,ars=R.ars[tipo];
+function render(){const a=parseFloat($('amt').value.replace(',','.'))||0,ars=R.ars[tipo];
  let usd=cur==='USD'?a:cur==='UYU'?a/R.uyu:a/ars;
  const L=[['USD','US$ '+fmt(usd,2)],['UYU','$U '+fmt(usd*R.uyu,0)],['ARS ('+names[tipo]+')','$ '+fmt(usd*ars,0)]].filter(x=>!x[0].startsWith(cur));
  $('out').innerHTML=L.map(x=>`<div class="res"><span>${x[0]}</span><span>${x[1]}</span></div>`).join('');
@@ -54,8 +54,13 @@ function setCur(c){cur=c;[...$('cur').children].forEach(b=>b.classList.toggle('o
 const last=JSON.parse(localStorage.getItem('last')||'null');if(last){$('amt').value=last.amt;setCur(last.cur)}
 const save=()=>localStorage.setItem('last',JSON.stringify({amt:$('amt').value,cur}));
 $('cur').onclick=e=>{if(!e.target.dataset.c)return;setCur(e.target.dataset.c);save();render();$('amt').focus();$('amt').select()};
-$('amt').oninput=()=>{save();render()};
+$('amt').oninput=()=>{const i=$('amt');i.value=i.value.replace(/[^0-9.,]/g,'');save();render()};
 const sel=()=>setTimeout(()=>$('amt').select(),0);$('amt').addEventListener('focus',sel);$('amt').addEventListener('click',sel);
+let fresh=true;const arm=()=>{fresh=true};
+$('amt').addEventListener('focus',arm);
+$('amt').addEventListener('beforeinput',e=>{if(fresh&&e.inputType==='insertText'&&e.data){e.preventDefault();$('amt').value=e.data;fresh=false;$('amt').dispatchEvent(new Event('input'))}else{fresh=false}});
+const grab=e=>{if(e.target.closest('button,select,a,input,label'))return;if(document.activeElement!==$('amt')){$('amt').focus({preventScroll:true});$('amt').setSelectionRange(0,$('amt').value.length)}};
+document.addEventListener('touchend',grab,{passive:true});document.addEventListener('click',grab);
 window.addEventListener('load',()=>{$('amt').focus();$('amt').select()});
 document.addEventListener('visibilitychange',()=>{if(!document.hidden){$('amt').focus();$('amt').select()}});$('tipo').value=tipo;$('tipo').onchange=e=>{tipo=e.target.value;localStorage.setItem('tipo',tipo);render()};
 $('upd').onclick=upd;if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js');render();if(navigator.onLine)upd();
