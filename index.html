@@ -16,18 +16,16 @@ a{color:#38bdf8}
 .meta{font-size:12px;color:#94a3b8;line-height:1.5}.ok{color:#4ade80}.warn{color:#fbbf24}
 table{width:100%;border-collapse:collapse;font-size:14px}td,th{padding:5px 4px;border-bottom:1px solid #334155;text-align:right}td:first-child,th:first-child{text-align:left}
 button.r{width:100%;padding:10px;margin-top:8px;border-radius:10px;border:0;background:#334155;color:#e2e8f0;font-size:14px}
-.dock{position:fixed;left:0;right:0;bottom:0;max-width:480px;margin:0 auto;border-radius:14px 14px 0 0;z-index:5;box-shadow:0 -8px 16px #0f172a;border:1px solid #334155;padding-bottom:calc(14px + env(safe-area-inset-bottom))}
-body{padding-bottom:190px}
 </style></head><body>
 <h1>Conversor ARS · UYU · USD</h1>
-<div class="card"><label>Cotizaciones</label><div id="quotes"></div></div>
+<div class="card" id="out"></div>
+<div class="card"><label>Monto</label><input id="amt" type="text" inputmode="decimal" autocomplete="off" enterkeyhint="done" placeholder="0" value="100">
+<div class="seg" id="cur"><button data-c="USD" class="on">USD</button><button data-c="UYU">UYU</button><button data-c="ARS">ARS</button></div></div>
 <div class="card"><label>Dólar para pesos argentinos</label>
 <select id="tipo"><option value="bolsa">MEP (bolsa)</option><option value="tarjeta">Tarjeta (oficial + impuestos)</option><option value="oficial">Oficial</option></select>
 <div class="meta" id="rates" style="margin-top:10px"></div><button class="r" id="upd">Actualizar cotizaciones</button></div>
+<div class="card"><label>Cotizaciones</label><div id="quotes"></div></div>
 <div class="card meta" id="src"></div>
-<div class="card" id="out"></div>
-<div class="card dock"><label>Monto</label><input id="amt" type="text" inputmode="decimal" autocomplete="off" enterkeyhint="done" placeholder="0" value="100">
-<div class="seg" id="cur"><button data-c="USD" class="on">USD</button><button data-c="UYU">UYU</button><button data-c="ARS">ARS</button></div></div>
 
 
 
@@ -58,7 +56,7 @@ const save=()=>localStorage.setItem('last',JSON.stringify({amt:$('amt').value,cu
 $('cur').onclick=e=>{if(!e.target.dataset.c)return;setCur(e.target.dataset.c);save();render()};
 $('amt').oninput=()=>{const i=$('amt');i.value=i.value.replace(/[^0-9.,]/g,'');save();render()};
 const sel=()=>setTimeout(()=>{const i=$('amt');i.setSelectionRange(0,i.value.length)},0);$('amt').addEventListener('focus',sel);$('amt').addEventListener('click',sel);
-window.addEventListener('load',()=>window.scrollTo(0,document.body.scrollHeight));
+
 $('tipo').value=tipo;$('tipo').onchange=e=>{tipo=e.target.value;localStorage.setItem('tipo',tipo);render()};
 $('upd').onclick=upd;if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js');render();if(navigator.onLine)upd();
 </script></body></html>
